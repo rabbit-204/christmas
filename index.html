@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Merry Christmas My Crush</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+    margin: 0;
+    overflow: hidden;
+    background: radial-gradient(circle at top, #0b0b2e, #02020a);
+    font-family: Arial, sans-serif;
+}
+canvas { display: block; }
+
+#message {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    pointer-events: none;
+    z-index: 10;
+    animation: glow 4s infinite ease-in-out;
+}
+h1 {
+    font-size: 3.8rem;
+    font-family: 'Brush Script MT', cursive;
+    text-shadow: 0 0 25px #ff4da6, 0 0 60px #ff99cc;
+}
+p {
+    font-size: 1.4rem;
+    font-weight: bold;
+    margin-top: 12px;
+}
+#message p {
+    opacity: 0.85;
+    text-shadow: 0 0 12px rgba(255,255,255,0.4);
+}
+
+@keyframes glow {
+    0%,100% { opacity:.9; transform:translate(-50%,-50%) scale(1); }
+    50% { opacity:1; transform:translate(-50%,-50%) scale(1.06); }
+}
+</style>
+</head>
+
+<body>
+<div id="message">
+    <h1>Merry Christmas</h1>
+    <!-- <p>Gửi tặng [Tên Crush] ❤️</p> --><p>Giáng Sinh này, anh chỉ mong em luôn mỉm cười 💖</p>
+
+</div>
+
+<script type="module">
+import * as THREE from 'https://cdn.skypack.dev/three@0.128.0';
+import { OrbitControls } from 'https://cdn.skypack.dev/three@0.128.0/examples/jsm/controls/OrbitControls.js';
+
+/* ================= CONFIG ================= */
+const photoPaths = ['./anh1.jpg','./anh2.jpg','./anh3.jpg','./anh4.jpg','./anh5.jpg','./anh6.jpg'];
+const treeTexturePath = './tree_texture.png';
+
+/* ================= SCENE ================= */
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x02020a, 0.002);
+
+const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1000);
+camera.position.set(0, 2.5, 13);
+
+const renderer = new THREE.WebGLRenderer({ antialias:true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+document.body.appendChild(renderer.domElement);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.3;
+
+/* ================= LIGHT ================= */
+scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+
+const sun = new THREE.DirectionalLight(0xffe082, 1.6);
+sun.position.set(10, 18, 6);
+sun.castShadow = true;
+scene.add(sun);
+
+scene.add(new THREE.PointLight(0xff3366, 1.2, 60));
+const coldLight = new THREE.PointLight(0x3399ff, 0.6, 80);
+coldLight.position.set(0, -10, 0);
+scene.add(coldLight);
+
+/* ================= CENTER GROUP ================= */
+const centerGroup = new THREE.Group();
+scene.add(centerGroup);
+
+const loader = new THREE.TextureLoader();
+
+/* ================= TREE (IMPROVED) ================= */
+loader.load(treeTexturePath, tex => {
+    tex.encoding = THREE.sRGBEncoding;
+
+    const mat = new THREE.MeshStandardMaterial({
+        map: tex,
+        transparent: true,
+        alphaTest: 0.35,
+        side: THREE.DoubleSide,
+        roughness: 0.9
+    });
+
+    const tree = new THREE.Group();
+
+    // 🌲 To & dày hơn
+    const height = 8.2;
+    const width  = 5.6;
+    const geo = new THREE.PlaneGeometry(width, height);
+
+    const layers = 16; // tăng độ dày
+    for (let i = 0; i < layers; i++) {
+        const p = new THREE.Mesh(geo, mat);
+        p.rotation.y = (i / layers) * Math.PI * 2;
+        p.castShadow = true;
+        tree.add(p);
+    }
+
+    tree.position.y = 1.2;
+    tree.scale.set(1.1, 1.1, 1.1); // scale nhẹ toàn cây
+    centerGroup.add(tree);
+});
+
+
+/* ================= GIFT BOX ================= */
+function createGift(color){
+    const g = new THREE.Group();
+    const size = 0.5 + Math.random()*0.3;
+
+    const box = new THREE.Mesh(
+        new THREE.BoxGeometry(size,size,size,6,6,6),
+        new THREE.MeshPhysicalMaterial({
+            color,
+            roughness:0.55,
+            metalness:0.25,
+            clearcoat:0.6
+        })
+    );
+    box.castShadow = true;
+    g.add(box);
+
+    const ribbonMat = new THREE.MeshPhysicalMaterial({
+        color:0xffffff,
+        metalness:0.85,
+        roughness:0.25,
+        emissive:0xffffff,
+        emissiveIntensity:0.35
+    });
+
+    const r1 = new THREE.Mesh(
+        new THREE.BoxGeometry(size*0.14,size*1.05,size*1.05),
+        ribbonMat
+    );
+    const r2 = r1.clone(); r2.rotation.y=Math.PI/2;
+    g.add(r1,r2);
+
+    const bowGeo = new THREE.TorusGeometry(size*0.16,size*0.05,16,32);
+    const b1 = new THREE.Mesh(bowGeo,ribbonMat);
+    const b2 = b1.clone();
+    b1.rotation.x=Math.PI/2;
+    b2.rotation.z=Math.PI/2;
+    b1.position.y=b2.position.y=size/2+0.05;
+    g.add(b1,b2);
+
+    g.userData={ float:Math.random()*Math.PI*2 };
+    return g;
+}
+
+const giftColors=[0xd32f2f,0x2e7d32,0xfbc02d,0x1565c0,0x6a1b9a];
+const gifts=[];
+
+for(let i=0;i<14;i++){
+    const g=createGift(giftColors[i%giftColors.length]);
+    const a=Math.random()*Math.PI*2;
+    const r=1.6+Math.random()*2.6;
+    g.position.set(Math.cos(a)*r,-2.8+Math.random()*0.3,Math.sin(a)*r);
+    g.rotation.y=Math.random()*Math.PI;
+    centerGroup.add(g);
+    gifts.push(g);
+}
+
+/* ================= SNOW BASE ================= */
+const snowMat=new THREE.MeshPhysicalMaterial({color:0xffffff,roughness:0.95});
+for(let i=0;i<20;i++){
+    const s=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),snowMat);
+    s.scale.set(1.6+Math.random(),0.35+Math.random()*0.3,1.6+Math.random());
+    s.position.set((Math.random()-0.5)*5,-3.3-Math.random()*0.4,(Math.random()-0.5)*5);
+    centerGroup.add(s);
+}
+
+const frameColors = [
+    0xffffff,
+    0xffe0b2,
+    0xe1bee7,
+    0xbbdefb,
+    0xc8e6c9
+];
+
+/* ================= PHOTOS (IMPROVED FRAMES) ================= */
+const photoGroup = new THREE.Group();
+const photoRadius = 9.2;
+
+photoPaths.forEach((path, i) => {
+    loader.load(path, tex => {
+
+        const frameDepth = 0.12 + Math.random() * 0.12;
+        const frameColor = frameColors[Math.floor(Math.random() * frameColors.length)];
+
+        const frameMat = new THREE.MeshPhysicalMaterial({
+            color: frameColor,
+            roughness: 0.35,
+            metalness: 0.25,
+            clearcoat: 0.6
+        });
+
+        const frame = new THREE.Mesh(
+            new THREE.BoxGeometry(3.2, 4.4, frameDepth),
+            frameMat
+        );
+
+        // 🎞️ Ảnh
+        const ar = tex.image.width / tex.image.height;
+        let w = 2.7, h = w / ar;
+        if (h > 3.6) { h = 3.6; w = h * ar; }
+
+        const img = new THREE.Mesh(
+            new THREE.PlaneGeometry(w, h),
+            new THREE.MeshBasicMaterial({ map: tex })
+        );
+        img.position.z = frameDepth / 2 + 0.01;
+        frame.add(img);
+
+        // 🌙 Bố trí vòng tròn + cao thấp ngẫu nhiên
+        const ang = (i / photoPaths.length) * Math.PI * 2;
+        frame.position.set(
+            Math.cos(ang) * photoRadius,
+            Math.random() * 1.6 - 0.6,
+            Math.sin(ang) * photoRadius
+        );
+
+        frame.rotation.y = -ang + Math.PI;
+        frame.rotation.z = (Math.random() - 0.5) * 0.12;
+
+        frame.userData = {
+            a: ang,
+            float: Math.random() * Math.PI * 2
+        };
+
+        photoGroup.add(frame);
+    });
+});
+
+scene.add(photoGroup);
+
+
+/* ================= FALLING SNOW ================= */
+const snowGeo=new THREE.BufferGeometry();
+const snowCount=6000;
+const pos=new Float32Array(snowCount*3);
+for(let i=0;i<pos.length;i++) pos[i]=(Math.random()-0.5)*120;
+snowGeo.setAttribute('position',new THREE.BufferAttribute(pos,3));
+
+const snowSprite=loader.load('https://threejs.org/examples/textures/sprites/disc.png');
+const snow=new THREE.Points(
+    snowGeo,
+    new THREE.PointsMaterial({
+        map:snowSprite,
+        size:0.3,
+        transparent:true,
+        opacity:0.85
+    })
+);
+scene.add(snow);
+
+/* ================= ANIMATE ================= */
+const clock=new THREE.Clock();
+function animate(){
+    requestAnimationFrame(animate);
+    const t=clock.getElapsedTime();
+    controls.update();
+
+    photoGroup.rotation.y-=0.002;
+    photoGroup.children.forEach(f=>{
+        f.position.y=Math.sin(t*1.5+f.userData.a)*0.6;
+        f.lookAt(camera.position);
+    });
+
+    gifts.forEach(g=>{
+        g.position.y+=Math.sin(t*1.4+g.userData.float)*0.002;
+        g.rotation.y+=0.002;
+    });
+
+    const p=snow.geometry.attributes.position.array;
+    for(let i=1;i<p.length;i+=3){
+        p[i]-=0.08;
+        if(p[i]<-60) p[i]=60;
+    }
+    snow.geometry.attributes.position.needsUpdate=true;
+
+    renderer.render(scene,camera);
+}
+animate();
+
+window.addEventListener('resize',()=>{
+    camera.aspect=innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
+</html>
